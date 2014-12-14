@@ -1,0 +1,96 @@
+Reproducible Research Peer assesement Project 1
+=================================================
+**Loading and preprocessing the data**
+```{r echo=TRUE}
+library(data.table)
+data <- read.csv("activity.csv")
+head(data)
+```
+
+### Question 1 What is mean total number of steps taken per day?
+**Aggregate steps per day, then make a histogram. It should be a normal distributed plot**
+```{r echo=TRUE}
+dt <- data.table(data,key="date")
+sumSteps <- dt[,lapply(.SD, sum), by=date]
+hist(sumSteps$steps, main = "Histogram of total steps per day",xlab="steps per day")
+```
+
+**Calculate the mean and median total number of steps taken per day**
+```{r echo=TRUE}
+mean <- mean(sumSteps$steps,na.rm=TRUE)
+mean
+median <- median(sumSteps$steps,na.rm=TRUE)
+median
+```
+#### *The mean of the total number of steps taken each day is 10766*
+#### *The median of the total number of steps taken each day is 10765*
+
+### Question 2 What is the average daily activity pattern?
+**Make a time series plot of the  5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)**
+
+```{r echo=TRUE}
+dt2 <- data.table(data,key="interval")
+Stepsby5min <- dt2[,lapply(.SD, mean,na.rm=TRUE), by=interval]
+plot(Stepsby5min$interval,Stepsby5min$steps,type="l",xlab="interval", ylab="average number of steps per interval")
+max <- max(Stepsby5min$steps)
+Stepsby5min$interval[which(Stepsby5min$steps==max)]
+```
+#### *the 835 interval contians the maimum number of steps*
+
+### Question 3 Imputing missing values
+**1. The total number of missing values in the dataset**
+```{r echo=TRUE}
+table(is.na(data$steps))
+```
+
+**2. Filling in all of the missing values in the dataset with the **mean for the 5-minue interval**
+   A new dataset data2 is generated with NA value replaced **
+```{r echo=TRUE}
+data2 <- as.data.frame(data)
+data2[is.na(data)]<-mean/288
+```
+**Histogram of the total number of steps taken each day**
+```{r echo=TRUE}
+dt2 <- data.table(data2,key="date")
+sumSteps2 <- dt2[,lapply(.SD, sum), by=date]
+hist(sumSteps2$steps, main = "Histogram of total steps per day with NA value replaced",xlab="steps per day")
+```
+
+**3.Calculate the mean and median total number of steps taken per day**
+```{r echo=TRUE}
+mean <- mean(sumSteps2$steps,na.rm=TRUE)
+mean
+median <- median(sumSteps2$steps,na.rm=TRUE)
+median
+```
+#### *The mean of the total number of steps taken each day is 10766*
+#### *The median of the total number of steps taken each day is 10766*
+#### *It seems like by replacing the NA value with the interval mean steps didnot change the histogram, and it increase the median to the same value as the mean, which makes the distribution more normal.*
+
+### Question 4 Are there differences in activity patterns between weekdays and weekends?
+**Convert the date into day of week, then reassign into two levels corresponding to either weekday or weekend.**
+```{r echo=TRUE}
+date <- data[, "date"]
+date <- as.Date(date)
+dayofweek <- weekdays(date)
+data <- cbind(data,dayofweek)
+levels(data$dayofweek)
+levels(data$dayofweek) <- c("Weekday","Weekday","Weekend","Weekend","Weekday","Weekday","Weekday")
+levels(data$dayofweek)
+```
+**Subset data by two different level**
+```{r echo=TRUE}
+weekday <- data[which(data$dayofweek=="Weekday"),]
+weekend <- data[which(data$dayofweek=="Weekend"),]
+
+weekday <- data.table(weekday,key="interval")
+weekdaypattern <- weekday[,lapply(.SD, mean,na.rm=TRUE), by=interval]
+
+weekend <- data.table(weekend,key="interval")
+weekendpattern <- weekend[,lapply(.SD, mean,na.rm=TRUE), by=interval]
+
+par(mfrow=c(2,1),mar=c(4.0,4.5,1,1))
+plot(weekdaypattern$interval,weekdaypattern$steps,type="l",xlab="interval",main="Weekday pattern",ylab="steps")
+plot(weekendpattern$interval,weekendpattern$steps,type="l",xlab="interval",main="Weekend pattern",ylab="steps")
+```
+#### *It appears that during the weekend, the average steps are lower and more evenly distributed throughout out the day.*
