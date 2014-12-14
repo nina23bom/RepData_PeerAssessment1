@@ -31,7 +31,7 @@ median
 ```{r echo=TRUE}
 dt2 <- data.table(data,key="interval")
 Stepsby5min <- dt2[,lapply(.SD, mean,na.rm=TRUE), by=interval]
-plot(Stepsby5min$interval,Stepsby5min$steps,type="l",xlab="interval", ylab="average number of steps per interval")
+plot(Stepsby5min$interval,Stepsby5min$steps,type="l",xlab="interval", ylab="Average number of steps per interval",main="average steps per interval")
 max <- max(Stepsby5min$steps)
 Stepsby5min$interval[which(Stepsby5min$steps==max)]
 ```
